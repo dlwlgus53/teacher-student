@@ -58,11 +58,12 @@ def test(args, model, test_loader, tokenizer):
                 iter+1, 
                 str(len(test_loader)),
                 ))
+                loss_sum += outputs.loss.to('cpu')
+                
 
     test_file = json.load(open(args.test_path , "r"))
     joint_goal_acc, slot_acc = evaluate_metrics(belief_state, test_file , ontology.QA['all-domain'])
     
-    loss_sum += outputs.loss.detach()
 
     return  joint_goal_acc, slot_acc, loss_sum/iter
 

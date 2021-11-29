@@ -1,9 +1,8 @@
 import pdb
 from base_logger import logger
 def calculate_diff(args, teacher_tagged, student_tagged):
-    diff_count = 0
-    diff_all =0
-    pdb.set_trace()
+    diff_count = 0.0
+    diff_all =0.0
     for dial_id in teacher_tagged:
         for turn_id in teacher_tagged[dial_id]:
             for schema in teacher_tagged[dial_id][turn_id]:
@@ -27,8 +26,8 @@ def evaluate_metrics(all_prediction, raw_file, slot_temp):
             belief_pred = [f'{k} : {v}' for (k,v) in belief_pred.items()] 
             if turn_idx == len(dial)-1:
                 logger.info(key)
-                logger.info(f'label : {sorted(belief_label.items())}')
-                logger.info(f'pred : {sorted(belief_pred.items())}')
+                logger.info(f'label : {sorted(belief_label)}')
+                logger.info(f'pred : {sorted(belief_pred)}')
                 
             if set(belief_label) == set(belief_pred):
                 joint_acc += 1

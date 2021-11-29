@@ -21,7 +21,9 @@ parser.add_argument('--diff_end' , type = int,  help = 'when loop end?', default
 parser.add_argument('--test_device', type = int, default = 0)
 parser.add_argument('--train_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/train_data.json')
 parser.add_argument('--val_path' ,  type = str,  default = '../woz-data/MultiWOZ_2.1/dev_data.json')
-parser.add_argument('--test_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/test_data.json')
+# parser.add_argument('--test_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/test_data.json')
+parser.add_argument('--test_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/train_data0.01.json')
+
 
 
 args = parser.parse_args()
@@ -104,7 +106,9 @@ def main():
             student_model =  copy.deepcopy(new_student) # 이부분은 실험을 해 보아야 겠군
     
     torch.save(student_model.state_dict(), f"model/woz{args.train_rate}_loop.pt")
-    score = test(args,student_model, test_loader, tokenizer)
+    joint_goal_acc, slot_acc, loss = test(args,student_model, test_loader, tokenizer)
+    logger.info(f'JGA : {joint_goal_acc} Slot Acc : {slot_acc} Loss : {loss}')
+    
     logger.info(score)
 
 if __name__ == '__main__':
