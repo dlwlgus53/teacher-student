@@ -1,15 +1,16 @@
 import torch
+import logging
 import pdb 
 import json
-from base_logger import logger
 import ontology
 from utils import*
 from collections import defaultdict
 
 from utils import evaluate_metrics
 
+logger = logging.getLogger("my")
 
-def train_loop(args, model, optimizer, train_loader, teacher_tagged):
+def train(args, model, optimizer, train_loader, teacher_tagged):
     model.train()
     gpu = 0
     if gpu==0: logger.info("Train start")
@@ -26,8 +27,8 @@ def train_loop(args, model, optimizer, train_loader, teacher_tagged):
         loss.backward()
         optimizer.step()
     
-        if (iter + 1) % 10 == 0 and gpu==0:
-            logger.info('gpu {} step : {}/{} Loss: {:.4f}'.format(
+        if (iter + 1) % 50 == 0 and gpu==0:
+            logger.info('Student training gpu {} step : {}/{} Loss: {:.4f}'.format(
                 gpu,
                 iter, 
                 str(len(train_loader)),
@@ -53,15 +54,15 @@ def test(args, model, test_loader, tokenizer):
                 schema = batch['schema'][idx]
                 belief_state[dial_id][turn_id][schema] = outputs_text[idx]
 
-            if (iter + 1) % 10 == 0:
+            if (iter + 1) % 50 == 0:
                 logger.info('step : {}/{}'.format(
                 iter+1, 
                 str(len(test_loader)),
                 ))
                 loss_sum += outputs.loss.to('cpu')
                 
-
     test_file = json.load(open(args.test_path , "r"))
+
     joint_goal_acc, slot_acc = evaluate_metrics(belief_state, test_file , ontology.QA['all-domain'])
     
 

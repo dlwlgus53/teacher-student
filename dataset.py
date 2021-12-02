@@ -4,20 +4,22 @@ import json
 import torch
 import pickle
 import ontology
+import logging
 import tokenizer_config as tc
-from tqdm import tqdm
-from base_logger import logger
+
+logger = logging.getLogger("my")
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_path, type, tokenizer):
         self.tokenizer = tokenizer
+        pickle_path = f'./data/preprocessed_{type}.pickle'
         
-        pickle_path = f'./data/preprocessed_train0.01.pickle'
-        raw_path = f'{data_path[:-5]}.json'
+        # pickle_path = f'./data/preprocessed_train0.01.pickle'
+        # raw_path = f'{data_path[:-5]}.json'
 
-        if type == 'train':
-            pickle_path = f'./data/preprocessed_train0.001.pickle'
-            raw_path = f'{data_path[:-5]}.json'
+        # if type == 'train':
+        #     pickle_path = f'./data/preprocessed_train0.001.pickle'
+        #     raw_path = f'{data_path[:-5]}.json'
             
         try:
             logger.info(f"load {pickle_path}")

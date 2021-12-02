@@ -1,18 +1,15 @@
-import torch
-
-
-import torch
+import torch, logging
 import ontology
-from base_logger import logger
+
 from collections import defaultdict
-import pdb
+logger = logging.getLogger("my")
 
 def tag(args, model, train_loader):
     '''
     train_loader에 있는 데이터를 load 가져와서 tagging 합니다.
     '''
     
-    number_belief_state= defaultdict(lambda : defaultdict(dict))# dial_id, # turn_id # schema
+    number_belief= defaultdict(lambda : defaultdict(dict))# dial_id, # turn_id # schema
     model.eval()
     with torch.no_grad():
         for iter,batch in enumerate(train_loader):
@@ -23,12 +20,13 @@ def tag(args, model, train_loader):
                 dial_id = batch['dial_id'][idx]
                 turn_id = batch['turn_id'][idx]
                 schema = batch['schema'][idx]
-                number_belief_state[dial_id][turn_id][schema] = outputs_text[idx]
+                number_belief[dial_id][turn_id][schema] = outputs_text[idx]
 
-            if (iter + 1) % 10 == 0:
+            if (iter + 1) % 50 == 0:
                 logger.info('step : {}/{}'.format(
                 iter+1, 
                 str(len(train_loader)),
                 ))
-                
-    return  number_belief_state
+    
+    # 파일에 쓰도록 하자!
+    return  number_belief

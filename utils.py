@@ -1,5 +1,8 @@
-import pdb
-from base_logger import logger
+import os
+import pdb, logging
+
+logger = logging.getLogger("my")
+
 def calculate_diff(args, teacher_tagged, student_tagged):
     diff_count = 0.0
     diff_all =0.0
@@ -54,3 +57,9 @@ def compute_acc(gold, pred, slot_temp):
     ACC = ACC / float(ACC_TOTAL)
     return ACC
 
+def makedirs(path): 
+   try: 
+        os.makedirs(path) 
+   except OSError: 
+       if not os.path.isdir(path): 
+           raise
