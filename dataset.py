@@ -13,13 +13,8 @@ class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_path, type, tokenizer):
         self.tokenizer = tokenizer
         pickle_path = f'./data/preprocessed_{type}.pickle'
-        
-        # pickle_path = f'./data/preprocessed_train0.01.pickle'
-        # raw_path = f'{data_path[:-5]}.json'
+        raw_path = f'{data_path[:-5]}.json'
 
-        # if type == 'train':
-        #     pickle_path = f'./data/preprocessed_train0.001.pickle'
-        #     raw_path = f'{data_path[:-5]}.json'
             
         try:
             logger.info(f"load {pickle_path}")

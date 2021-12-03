@@ -10,18 +10,28 @@ from utils import evaluate_metrics
 
 logger = logging.getLogger("my")
 
-def train(args, model, optimizer, train_loader, teacher_tagged):
+def _get_label(dial_ids, turn_ids, schemas, teacher_tagged):
+    label = ''
+    for tag in teacher_tagged:
+        try:
+            label = tag[dial_ids][turn_ids][schemas]
+        except KeyError as e:
+            continue
+    return label
+
+
+
+def train(args, gpu, model, optimizer, train_loader, teacher_tagged):
     model.train()
-    gpu = 0
     if gpu==0: logger.info("Train start")
     for iter, batch in enumerate(train_loader):
         optimizer.zero_grad()
         dial_ids = batch['dial_id']
         turn_ids = batch['turn_id']
         schemas = batch['schema']
-        input_ids = batch['input']['input_ids'].to('cuda:0')
-        labels = [ teacher_tagged[d][t][s] for (d,t,s) in zip(dial_ids, turn_ids, schemas)]
-        labels = torch.stack(labels).to('cuda:0')
+        input_ids = batch['input']['input_ids'].to(f'cuda:{gpu}')
+        labels = [ _get_label(d,t,s,teacher_tagged) for (d,t,s) in zip(dial_ids, turn_ids, schemas)]
+        labels = torch.stack(labels).to(f'cuda:{gpu}')
         outputs = model(input_ids=input_ids, labels=labels)
         loss =outputs.loss
         loss.backward()
@@ -32,18 +42,20 @@ def train(args, model, optimizer, train_loader, teacher_tagged):
                 gpu,
                 iter, 
                 str(len(train_loader)),
-                loss.detach())
+                loss.cpu())
             )
 
-def test(args, model, test_loader, tokenizer):
+def test(args,  model, test_loader, tokenizer):
     belief_state= defaultdict(lambda : defaultdict(dict))# dial_id, # turn_id # schema
     model.eval()
     loss_sum = 0
     logger.info("Test start")
     with torch.no_grad():
         for iter,batch in enumerate(test_loader):
-            outputs = model(input_ids=batch['input']['input_ids'].to('cuda:0'), labels=batch['target']['input_ids'].to('cuda:0'))
-            outputs_text = model.generate(input_ids=batch['input']['input_ids'].to('cuda:0'))
+            input_ids = batch['input']['input_ids'].to(f'cuda:{args.test_device}')
+            labels= batch['target']['input_ids'].to(f'cuda:{args.test_device}')
+            outputs = model(input_ids=input_ids, labels=labels)
+            outputs_text = model.generate(input_ids=input_ids)
             outputs_text = [tokenizer.decode(o).replace('</s>','').replace('<pad>','').strip() for o in outputs_text]
             
             

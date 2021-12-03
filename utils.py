@@ -1,19 +1,59 @@
-import os
+import os, csv
 import pdb, logging
+import pickle
+from collections import defaultdict
 
 logger = logging.getLogger("my")
 
-def calculate_diff(args, teacher_tagged, student_tagged):
+    
+def load_tag(args, prefix):
+    tags = []
+    
+    path_dir = './temp'
+    file_list = os.listdir(path_dir)
+
+    for pickle_path in file_list:
+        if pickle_path[0] == prefix:
+            
+            with open(f'./temp/{pickle_path}', 'rb') as f:
+                item = pickle.load(f)
+                tags.append(item)
+            
+    return tags
+
+def _get_label(dial_ids, turn_ids, schemas, tagged):
+    label = ''
+    for tag in tagged:
+        try:
+            label = tag[dial_ids][turn_ids][schemas]
+        except KeyError as e:
+            continue
+    return label
+   
+def calculate_diff(args, teacher_tagged, student_tagged, tokenizer):
     diff_count = 0.0
     diff_all =0.0
-    for dial_id in teacher_tagged:
-        for turn_id in teacher_tagged[dial_id]:
-            for schema in teacher_tagged[dial_id][turn_id]:
-                teacher_tag = teacher_tagged[dial_id][turn_id][schema]
-                student_tag = student_tagged[dial_id][turn_id][schema]
-                diff_all += 1
-                if  (teacher_tag == student_tag).all(): diff_count +=1
-    return 1- (diff_count/diff_all)
+    for tag in teacher_tagged:
+        for dial_id in tag:
+            for idx, turn_id in enumerate(tag[dial_id]):
+                texts = []
+                for schema in tag[dial_id][turn_id]:
+                    teacher_tag = tag[dial_id][turn_id][schema]
+                    student_tag = _get_label(dial_id, turn_id, schema, student_tagged)
+                    diff_all += 1
+                    teacher_text = tokenizer.decode(teacher_tag).replace('</s>','').replace('<pad>','').strip()
+                    student_text = tokenizer.decode(student_tag).replace('</s>','').replace('<pad>','').strip()
+              
+                    if teacher_text == student_text: diff_count +=1
+                    
+                    if idx == len(tag[dial_id])-1:
+                        texts.append(teacher_text +' : ' + student_text)
+                        
+            if idx == len(tag[dial_id])-1:
+                logger.info(dial_id)
+                logger.info(texts)
+                    
+    return (diff_count/diff_all)
 
 def evaluate_metrics(all_prediction, raw_file, slot_temp):
     turn_acc, joint_acc, turn_cnt, joint_cnt = 0, 0, 0, 0
@@ -63,3 +103,11 @@ def makedirs(path):
    except OSError: 
        if not os.path.isdir(path): 
            raise
+       
+       
+       
+def dict_to_csv(data, file_name):
+    w = csv.writer(open(f'./logs/csvs/{file_name}', "a"))
+    for k,v in data.items():
+        w.writerow([k,v])
+    w.writerow(['===============','================='])
