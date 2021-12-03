@@ -21,14 +21,13 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration,Adafactor
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_rate' ,  type = float, default=0.01, help='not a datarate mode_trained data rate')
-parser.add_argument('--test_batch_size' , type = int, default=32)
+parser.add_argument('--tag_batch_size' , type = int, default=32)
 parser.add_argument('--train_batch_size' , type = int, default=8)
 parser.add_argument('--max_iter' ,  type = int, default=10)
 parser.add_argument('--base_trained', type = str, default = "google/t5-small-ssm-nq", help =" pretrainned model from 🤗")
 parser.add_argument('--pretrained_model', type = str, default = "google/t5-small-ssm-nq", help =" pretrainned model from 🤗")
 
 parser.add_argument('--diff_end' , type = int,  help = 'when loop end?', default = 0.01)
-parser.add_argument('--test_device', type = int, default = 0)
 parser.add_argument('--train_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/train_data.json') # for all data
 parser.add_argument('--test_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/test_data.json') # for all data
 parser.add_argument('--save_prefix' , type = str,  default = '') # for all data
@@ -84,9 +83,14 @@ def main(gpu, args):
     tokenizer = T5Tokenizer.from_pretrained(args.base_trained)
 
     train_batch_size = int(args.train_batch_size / args.gpus)
+    tag_batch_size = int(args.tag_batch_size / args.gpus)
+    
     train_dataset =Dataset(args.train_path, 'train', tokenizer)
+    
     train_loader = get_loader(train_dataset, train_batch_size)
-
+    tag_loader =  get_loader(train_dataset, tag_batch_size)
+    
+    
     logger.info('load the model')
 
     teacher_model = T5ForConditionalGeneration.from_pretrained(args.base_trained, return_dict=True).to(gpu)
@@ -119,7 +123,7 @@ def main(gpu, args):
         if gpu ==0 :logger.info("1. Teacher Tagging")
 
         if iter ==0:
-            # tag(args,gpu, teacher_model, train_loader, prefix = 't')
+            # tag(args,gpu, teacher_model, tag_loader, prefix = 't')
             dist.barrier()
             teacher_tagged = utils.load_tag(args, prefix = 't')
         else:
@@ -131,7 +135,7 @@ def main(gpu, args):
         train(args, gpu, student_model, optimizer, train_loader, teacher_tagged)
         # 학습 후 태깅합니다.
         if gpu ==0 :logger.info("2.2 Student Tagging")
-        tag(args, gpu, student_model,train_loader, prefix = 's')
+        tag(args, gpu, student_model,tag_loader, prefix = 's')
         dist.barrier()
         student_tagged = utils.load_tag(args, prefix = 's')
         # 차이를 봅니다.
@@ -175,12 +179,12 @@ def evaluate():
             name = k[7:] # remove 'module.' of DataParallel/DistributedDataParallel
             new_state_dict[name] = v
         model = T5ForConditionalGeneration.from_pretrained(args.base_trained, return_dict=True)
-        model.to(f'cuda:{args.test_device}')
+        model.to(f'cuda')
         model.load_state_dict(new_state_dict)
     
     else:
         model = T5ForConditionalGeneration.from_pretrained(args.base_trained, return_dict=True)
-        model.to(f'cuda:{args.test_device}')
+        model.to(f'cuda')
         
         
     joint_goal_acc, slot_acc, schema_acc, loss = test(args, model, loader, tokenizer)

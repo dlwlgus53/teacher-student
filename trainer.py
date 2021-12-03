@@ -52,8 +52,8 @@ def test(args,  model, test_loader, tokenizer):
     logger.info("Test start")
     with torch.no_grad():
         for iter,batch in enumerate(test_loader):
-            input_ids = batch['input']['input_ids'].to(f'cuda:{args.test_device}')
-            labels= batch['target']['input_ids'].to(f'cuda:{args.test_device}')
+            input_ids = batch['input']['input_ids'].to(f'cuda')
+            labels= batch['target']['input_ids'].to(f'cuda')
             outputs = model(input_ids=input_ids, labels=labels)
             outputs_text = model.generate(input_ids=input_ids)
             outputs_text = [tokenizer.decode(o).replace('</s>','').replace('<pad>','').strip() for o in outputs_text]

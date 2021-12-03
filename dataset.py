@@ -2,10 +2,10 @@ import re
 import pdb
 import json
 import torch
-import pickle
 import ontology
 import logging
 import tokenizer_config as tc
+import pickle
 
 logger = logging.getLogger("my")
 
@@ -15,6 +15,9 @@ class Dataset(torch.utils.data.Dataset):
         pickle_path = f'./data/preprocessed_{type}.pickle'
         raw_path = f'{data_path[:-5]}.json'
 
+        if type == 'train':
+            pickle_path = f'./data/preprocessed_{type}0.3.pickle'
+            
             
         try:
             logger.info(f"load {pickle_path}")
