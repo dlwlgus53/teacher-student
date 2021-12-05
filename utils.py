@@ -9,13 +9,13 @@ logger = logging.getLogger("my")
 def load_tag(args, prefix):
     tags = []
     
-    path_dir = './temp'
+    path_dir = f'./{args.temp_folder}'
     file_list = os.listdir(path_dir)
 
     for pickle_path in file_list:
         if pickle_path[0] == prefix:
             
-            with open(f'./temp/{pickle_path}', 'rb') as f:
+            with open(f'./{path_dir}/{pickle_path}', 'rb') as f:
                 item = pickle.load(f)
                 tags.append(item)
             

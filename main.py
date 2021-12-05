@@ -36,6 +36,8 @@ parser.add_argument('-n', '--nodes', default=1,type=int, metavar='N')
 parser.add_argument('-g', '--gpus', default=2, type=int,help='number of gpus per node')
 parser.add_argument('-nr', '--nr', default=0, type=int,help='ranking within the nodes')
 parser.add_argument('--port' ,  type = int, default=17365, help='port number')
+parser.add_argument('--temp_folder' ,  type = str, default='temp', help='temp folder')
+
 
 
 # parser.add_argument('--test_path' , type = str,  default = '../woz-data/MultiWOZ_2.1/train_data0.01.json')
@@ -201,7 +203,7 @@ def evaluate():
     logger.info(f'JGA : {joint_goal_acc} Slot Acc : {slot_acc} Loss : {loss}')
     
 if __name__ == '__main__':
-    utils.makedirs('temp')
+    utils.makedirs(args.temp_folder)
     world_size = args.gpus * args.nodes 
     mp.spawn(main,
         nprocs=world_size,
